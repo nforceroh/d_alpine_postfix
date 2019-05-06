@@ -1,0 +1,4 @@
+{
+    "docker-explorer.showAzureRegistries": false,
+    "docker-explorer.enableTelemetry": false
+}
