@@ -1,11 +1,3 @@
 #!/usr/bin/with-contenv bash
 
-postconf myhostname="${MAILNAME}"
-postconf mynetworks="${MYNETWORKS}"
-
-if [ "${FILTER_MIME}" == "true" ]
-then
-  postconf mime_header_checks=regexp:/etc/postfix/mime_header_checks
-fi
-
 /usr/libexec/postfix/master -d

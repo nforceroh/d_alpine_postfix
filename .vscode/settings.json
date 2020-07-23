@@ -1,4 +1,5 @@
 {
     "docker-explorer.showAzureRegistries": false,
-    "docker-explorer.enableTelemetry": false
+    "docker-explorer.enableTelemetry": false,
+    "docker.defaultRegistryPath": "nforceroh"
 }

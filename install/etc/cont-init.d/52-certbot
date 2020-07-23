@@ -1,0 +1,27 @@
+#!/usr/bin/with-contenv bash
+
+echo "Checking if certbot enabled"
+CERTBOT_ENABLE=${CERTBOT_ENABLE:-false}
+CERTBOT_CF_TOKEN=${CERTBOT_CF_TOKEN:-false}
+CERTBOT_EMAIL=${CERTBOT_EMAIL:-false}
+
+CERTBOT_ENABLE=`echo ${CERTBOT_ENABLE} | tr [:upper:] [:lower:]`
+
+if [ "${CERTBOT_ENABLE}" = "true" ]; then
+    if [ "${CERTBOT_CF_TOKEN}" != "false" ]; then
+        echo "Saving Cloudflare API token to /etc/postfix/cf.ini"
+        echo "dns_cloudflare_api_token = ${CERTBOT_CF_TOKEN}" > /etc/postfix/cf.ini
+        if [ "${CERTBOT_EMAIL}" != "false" ]; then
+            echo "Generating SSL certificate"
+            certbot certonly -n --agree-tos -m ${CERTBOT_EMAIL} --dns-cloudflare --dns-cloudflare-credentials /etc/postfix/cf.ini -d ${MAILNAME}
+            postconf smtpd_tls_cert_file="/etc/letsencrypt/live/${MAILNAME}/fullchain.pem"
+            postconf smtpd_tls_key_file="/etc/letsencrypt/live/${MAILNAME}/privkey.pem"
+        fi
+    else
+        echo "No key defined, skipping certbot setup"
+        exit 1
+    fi
+else 
+    echo "certbot automation not enabled"
+    exit 0
+fi

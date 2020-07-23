@@ -1,0 +1,5 @@
+user = {{ .Env.DB_USER }}
+password = {{ .Env.DB_PASSWORD }}
+hosts = {{ .Env.DB_HOST }}
+dbname = {{ .Env.DB_DATABASE }}
+query = SELECT maildir FROM mailbox WHERE username = '%s' AND active = 1

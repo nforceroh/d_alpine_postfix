@@ -1,0 +1,92 @@
+#!/usr/bin/with-contenv bash
+
+postconf myhostname="${MAILNAME}"
+postconf mynetworks="${MYNETWORKS}"
+postconf inet_protocols=all
+
+postconf -M submission/inet="submission   inet   n   -   n   -   -   smtpd"
+postconf -P "submission/inet/syslog_name=postfix/submission"
+postconf -P "submission/inet/smtpd_tls_security_level=encrypt"
+postconf -P "submission/inet/smtpd_etrn_restrictions=reject"
+postconf -P "submission/inet/smtpd_sasl_type=dovecot"
+postconf -P "submission/inet/smtpd_sasl_path=inet:${DOVECOT_HOST}:12345"
+postconf -P "submission/inet/smtpd_sasl_security_options=noanonymous"
+postconf -P "submission/inet/smtpd_sasl_local_domain=$myhostname"
+postconf -P "submission/inet/smtpd_sasl_auth_enable=yes"
+postconf -P "submission/inet/milter_macro_daemon_name=ORIGINATING"
+postconf -P "submission/inet/smtpd_client_restrictions=permit_mynetworks,permit_sasl_authenticated,reject"
+postconf -P "submission/inet/smtpd_recipient_restrictions=permit_mynetworks,permit_sasl_authenticated,reject"
+postconf -P "submission/inet/smtpd_helo_restrictions=permit_mynetworks,permit"
+
+postconf -M smtps/inet="smtps     inet  n       -       n       -       -       smtpd"
+postconf -P "smtps/inet/syslog_name=postfix/smtps"
+postconf -P "smtps/inet/smtpd_tls_wrappermode=yes"
+postconf -P "smtps/inet/smtpd_sasl_auth_enable=yes"
+postconf -P "smtps/inet/smtpd_reject_unlisted_recipient=no"
+#postconf -P "smtps/inetsmtpd_client_restrictions=$mua_client_restrictions"
+#postconf -P "smtps/inet/smtpd_helo_restrictions=$mua_helo_restrictions"
+#postconf -P "smtps/inet/smtpd_sender_restrictions=$mua_sender_restrictions"
+#postconf -P "smtps/inet/smtpd_recipient_restrictions="
+postconf -P "smtps/inet/smtpd_relay_restrictions=permit_sasl_authenticated,reject"
+#postconf -P "smtps/inet/ilter_macro_daemon_name=ORIGINATING"
+
+# Configure postfix
+postconf virtual_mailbox_domains=mysql:/etc/postfix/mysql-virtual-mailbox-domains.cf
+postconf virtual_mailbox_maps=mysql:/etc/postfix/mysql-virtual-mailbox-maps.cf
+postconf virtual_alias_maps=mysql:/etc/postfix/mysql-virtual-alias-maps.cf
+postconf smtpd_recipient_restrictions="permit_sasl_authenticated,permit_mynetworks,reject_unauth_destination,reject_invalid_hostname,reject_non_fqdn_hostname,reject_non_fqdn_sender,reject_non_fqdn_recipient,reject_unknown_sender_domain"
+
+postconf smtpd_helo_required=yes
+postconf smtpd_helo_restrictions="permit_mynetworks,reject_non_fqdn_helo_hostname,reject_unknown_helo_hostname,reject_invalid_helo_hostname,reject_non_fqdn_hostname, reject_invalid_hostname"
+postconf strict_rfc821_envelopes=yes
+postconf smtputf8_enable=no
+# rspamd config
+postconf milter_protocol=6
+postconf milter_mail_macros="i {mail_addr} {client_addr} {client_name} {auth_authen}"
+postconf milter_default_action=accept
+postconf smtpd_milters="inet:${RSPAMD_HOST}:11332"
+postconf non_smtpd_milters="inet:${RSPAMD_HOST}:11332"
+
+postconf virtual_transport="lmtp:${DOVECOT_HOST}:24"
+postconf smtpd_sasl_path="inet:${DOVECOT_HOST}:12345"
+postconf smtpd_sasl_type=dovecot
+postconf smtpd_sasl_auth_enable=yes
+
+postconf smtp_tls_security_level=may
+postconf smtp_tls_note_starttls_offer=yes
+postconf smtpd_tls_security_level=may
+postconf smtpd_tls_loglevel=1
+postconf smtpd_tls_received_header=yes
+postconf smtpd_tls_auth_only=yes
+postconf smtpd_tls_cert_file="${SSL_CERT}"
+postconf smtpd_tls_key_file="${SSL_KEY}"
+
+postconf smtpd_discard_ehlo_keywords="silent-discard, dsn"
+postconf soft_bounce=no
+postconf message_size_limit=52428800
+postconf mailbox_size_limit=0
+postconf recipient_delimiter=-
+postconf maximal_queue_lifetime=1h
+postconf bounce_queue_lifetime=1h
+postconf maximal_backoff_time=15m
+postconf minimal_backoff_time=5m
+postconf queue_run_delay=5m
+postconf disable_vrfy_command=yes
+postconf smtpd_delay_reject=yes
+# RATE THROTTLING
+postconf smtpd_client_connection_rate_limit=3
+postconf smtpd_error_sleep_time=10s
+postconf smtpd_soft_error_limit=2
+postconf smtpd_hard_error_limit=2
+newaliases
+
+# Set up a relay host, if needed
+if [ ! -z "$RELAYHOST" ]; then
+	echo -en "‣ Forwarding all emails to $RELAYHOST"
+	postconf -e "relayhost=$RELAYHOST"
+fi
+
+if [ "${FILTER_MIME}" == "true" ]
+then
+  postconf mime_header_checks=regexp:/etc/postfix/mime_header_checks
+fi
