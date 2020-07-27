@@ -21,6 +21,10 @@ if [ "${CERTBOT_ENABLE}" = "true" ]; then
         echo "No key defined, skipping certbot setup"
         exit 1
     fi
+    echo "Creating cronjob"
+    echo "#!/bin/sh" >/etc/periodic/daily/certbot
+    echo "certbot certonly -n --agree-tos -m \${CERTBOT_EMAIL} --dns-cloudflare --dns-cloudflare-credentials /etc/postfix/cf.ini -d \${MAILNAME}" >> /etc/periodic/daily/certbot
+    chmod 755 /etc/periodic/daily/certbot
 else 
     echo "certbot automation not enabled"
     exit 0
