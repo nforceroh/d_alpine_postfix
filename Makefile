@@ -20,6 +20,7 @@ all: build push gitcommit gitpush
 build: 
 	@echo "Building $(IMG_NAME)image"
 	docker build --rm --tag=$(IMG_REPO)/$(IMG_NAME) .
+	
 ifeq ($(VERSION), dev)
 	docker tag $(IMG_REPO)/$(IMG_NAME) $(IMG_REPO)/$(IMG_NAME):dev
 else
