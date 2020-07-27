@@ -21,16 +21,20 @@ RUN echo "Installing postfix" \
 	&& apk update \
     && apk upgrade \
     && apk add --no-cache postfix postfix-mysql postfix-pcre acf-postfix policyd-spf-fs mariadb-client rspamd-client \
-       mailx certbot ipset iptables ip6tables kmod nftables \
+       mailx ipset iptables ip6tables kmod nftables \
     && update-ca-certificates \
-    && pip install certbot-dns-cloudflare \
     && mkdir -p /etc/postfix/letsencrypt /etc/postfix/opendkim /etc/postfix/fail2ban \
     && ln -s /etc/postfix/letsencrypt /etc/letsencrypt \
     && ln -s /etc/postfix/opendkim /etc/opendkim \
     && ln -s /etc/postfix/fail2ban /etc/fail2ban \
     && apk add --no-cache certbot opendkim opendkim-utils fail2ban \
     && gpasswd -a postfix opendkim \
-	&& rm -rf /var/cache/apk/* /usr/src/* 
+### cloudflare deps
+	&& apk add --no-cache --virtual .build-deps gcc musl-dev python3-dev libffi-dev openssl-dev \
+    && pip install certbot-dns-cloudflare \
+### Cleanup
+    && apk del .build-deps gcc musl-dev \	
+    && rm -rf /var/cache/apk/* /usr/src/* 
 
 ### Add Files
 ADD install /
