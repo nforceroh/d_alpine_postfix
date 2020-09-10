@@ -7,15 +7,20 @@ DATE_VERSION := $(shell date +"v%Y%m%d" )
 BRANCH := $(shell git rev-parse --abbrev-ref HEAD)
 HASH := $(shell git rev-parse HEAD)
  
-ifeq ($(BRANCH),master)
+ifeq ($(BRANCH),dev)
 	VERSION := dev
 else
 	VERSION := $(BRANCH)
 endif
 
 
-#.PHONY: setupbuild
-all: build push gitcommit gitpush
+.PHONY: context all build push gitcommit gitpush
+all: context build push 
+git: context gitcommit gitpush
+
+context: 
+	@echo "Switching docker context to default"
+	docker context use default
 
 build: 
 	@echo "Building $(IMG_NAME)image"
@@ -24,7 +29,6 @@ ifeq ($(VERSION), dev)
 	docker tag $(IMG_REPO)/$(IMG_NAME) $(IMG_REPO)/$(IMG_NAME):dev
 else
 	docker tag $(IMG_REPO)/$(IMG_NAME) $(IMG_REPO)/$(IMG_NAME):$(DATE_VERSION)
-	docker tag $(IMG_REPO)/$(IMG_NAME) $(IMG_REPO)/$(IMG_NAME):$(VERSION)
 	docker tag $(IMG_REPO)/$(IMG_NAME) $(IMG_REPO)/$(IMG_NAME):latest
 endif
 
@@ -46,7 +50,6 @@ ifeq ($(VERSION), dev)
 	docker push $(IMG_REPO)/$(IMG_NAME):dev
 else
 	docker push $(IMG_REPO)/$(IMG_NAME):$(DATE_VERSION)
-	docker push $(IMG_REPO)/$(IMG_NAME):$(VERSION)
 	docker push $(IMG_REPO)/$(IMG_NAME):latest
 endif
 
