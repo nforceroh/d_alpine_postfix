@@ -1,4 +1,4 @@
-FROM nforceroh/d_alpine-s6:dev
+FROM nforceroh/d_alpine-s6:edge
 LABEL maintainer="Sylvain Martin (sylvain@nforcer.com)"
 
 ENV CERTBOT_ENABLE=false \
