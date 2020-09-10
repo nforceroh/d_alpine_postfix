@@ -18,10 +18,12 @@ ENV CERTBOT_ENABLE=false \
     RELAYHOST="mail.twc.com"
 	
 RUN echo "Installing postfix" \
-	&& apk update \
+    && echo "http://dl-cdn.alpinelinux.org/alpine/edge/main" >> /etc/apk/repositories \
+    && echo "http://dl-cdn.alpinelinux.org/alpine/edge/community" >> /etc/apk/repositories \
+ 	&& apk update \
     && apk upgrade \
-    && apk add --no-cache postfix postfix-mysql postfix-pcre acf-postfix policyd-spf-fs mariadb-client rspamd-client \
-       mailx ipset iptables ip6tables kmod nftables \
+    && apk add --no-cache postfix postfix-mysql postfix-pcre policyd-spf-fs mariadb-client rspamd-client \
+     ipset iptables ip6tables kmod nftables \
     && update-ca-certificates \
     && mkdir -p /etc/postfix/letsencrypt /etc/postfix/opendkim /etc/postfix/fail2ban \
     && ln -s /etc/postfix/letsencrypt /etc/letsencrypt \
@@ -33,7 +35,7 @@ RUN echo "Installing postfix" \
 	&& apk add --no-cache --virtual .build-deps gcc musl-dev python3-dev libffi-dev openssl-dev \
     && pip install certbot-dns-cloudflare \
 ### Cleanup
-    && apk del .build-deps gcc musl-dev \	
+    && apk del .build-deps \	
     && rm -rf /var/cache/apk/* /usr/src/* 
 
 ### Add Files
